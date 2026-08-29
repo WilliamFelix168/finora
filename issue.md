@@ -58,9 +58,13 @@ add real value; nothing is auto-carried.
 
 ## Architecture decisions to make deliberately (from the code review)
 
-These three items were flagged as accidental/unexamined choices in the current implementation.
-Before the financial domain expands, each needs a conscious decision recorded and applied
-consistently — not necessarily a full rebuild, but a documented direction.
+**Status: decided in Phase 1 — see `docs/phase-1-architecture-decisions.md` for full
+options/trade-offs/reasoning.** Decided outcomes: (1) security — app-layer user scoping stays the
+enforced boundary, formalized behind a shared data-access helper, RLS remains defense-in-depth;
+(2) source of truth — transactions are the only thing written directly, balances/holdings are
+always derived and snapshotted, never a form field; (3) precision — keep Postgres `numeric` with
+wider scale per value class, stop doing financial math in native JS `number`. The context below
+is retained as the rationale for why each decision was needed.
 
 1. **User-data security / RLS strategy.** Drizzle currently connects to Postgres with a
    privileged connection, so Supabase Row Level Security policies exist on the tables but do not
@@ -90,13 +94,19 @@ above and of the current transaction model, not a standalone defect to patch —
 resolved as a side effect of redesigning the transaction/derived-value model in Phase 3, rather
 than repaired in place in code that's likely being replaced.
 
-## Phase 1 — Security & Financial Data Model Foundations
+## Phase 1 — Security & Financial Data Model Foundations ✅ Decided (2026-08-29)
 
 Decide and document the three architecture items above before any new financial schema is built.
 Establish (at a planning level) the account/asset/holding/transaction vocabulary this project will
 use consistently, and how "what a user owns and what it's worth" will be represented conceptually
 (stored vs. derived). This phase is about making decisions and recording them, using the existing
 `profiles`/`accounts` foundation as the reference point — not about writing the final schema yet.
+
+Decisions recorded in `docs/phase-1-architecture-decisions.md` (approved 2026-08-29): app-layer
+user scoping (formalized, RLS as defense-in-depth), transactions-as-sole-source-of-truth with
+derived/snapshotted balances, and `numeric` + decimal-safe arithmetic for financial precision.
+No code was changed to produce this decision — Phase 2 applies these decisions to the actual
+schema and is now unblocked.
 
 ## Phase 2 — Core Domain: Accounts, Assets, and Investment Transactions
 
